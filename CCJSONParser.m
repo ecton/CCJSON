@@ -221,8 +221,8 @@ static id ParseJSONObject(int *offset, unichar *json, int jsonLength, NSError **
 	NSError *error = nil;
 	id obj = ParseJSONObject(&consumedLength, json, jsonLength, &error);
 	if (error) {
-		NSLog([error description]);
-		NSLog([[error userInfo] description]);
+		NSLog(@"%@", [error description]);
+		NSLog(@"%@", [[error userInfo] description]);
 	}
 	
 	free(json);
