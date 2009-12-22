@@ -162,20 +162,24 @@ static id ParseJSONObject(int *offset, unichar *json, int jsonLength, NSError **
 			} break; 
 			
 			default: { // Number or bad stuff
+				BOOL valid = NO;
 				double value = 0;
 				BOOL neg = NO;
 				if (json[*offset] == '-') {
 					neg = YES;
+					valid = YES;
 					*offset += 1;
 				}
 				
 				while (*offset < jsonLength && json[*offset] >= '0' && json[*offset] <= '9') {
 					value = value * 10 + json[*offset] - '0';
+					valid = YES;
 					*offset += 1;
 				}
 				
 				if (*offset < jsonLength && json[*offset] == '.') {
 					*offset += 1;
+					valid = YES;
 					double place = 10;					
 					while (*offset < jsonLength && json[*offset] >= '0' && json[*offset] <= '9') {
 						value = value + (double)(json[*offset] - '0') / place;
@@ -186,6 +190,7 @@ static id ParseJSONObject(int *offset, unichar *json, int jsonLength, NSError **
 				
 				if (*offset < jsonLength && (json[*offset] == 'e' || json[*offset] == 'E')) {
 					*offset += 1;
+					valid = YES;
 					BOOL posExp = YES;
 					if (*offset < jsonLength && json[*offset] == '+') {
 						*offset += 1;
@@ -201,6 +206,10 @@ static id ParseJSONObject(int *offset, unichar *json, int jsonLength, NSError **
 					}
 					
 					value = value * pow(10, posExp ? exp : -exp);
+				}
+				
+				if (!valid) {
+					PARSE_ERROR(@"Invalid data", *offset, outError);
 				}
 				
 				if (neg) value = -value;
