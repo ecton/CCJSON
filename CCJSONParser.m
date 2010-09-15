@@ -45,7 +45,7 @@
 
 @implementation CCJSONParser
 
-static id ParseJSONObject(int *offset, unichar *json, int jsonLength, NSError **outError) {
+static id ParseJSONObject(int *offset, unichar *json, int jsonLength, BOOL useNSNull, NSError **outError) {
 	// Skip any whitespace
 	while (json[*offset] == '\t' || json[*offset] == ' ' || json[*offset] == '\r' || json[*offset] == '\n') {
 		*offset += 1;
@@ -59,15 +59,17 @@ static id ParseJSONObject(int *offset, unichar *json, int jsonLength, NSError **
 				if (*offset < jsonLength && json[*offset] != '}') {
 					while (true) {
 						SkipWhitespace(offset, json, jsonLength);
-						id key = ParseJSONObject(offset, json, jsonLength, outError);
+						id key = ParseJSONObject(offset, json, jsonLength, useNSNull, outError);
 						if (outError && *outError) return nil;
 						SkipWhitespace(offset, json, jsonLength);
 						if (*offset >= jsonLength || json[*offset] != ':') PARSE_ERROR(@"Expected : for object value", *offset, outError);
 						*offset += 1;
 						SkipWhitespace(offset, json, jsonLength);
-						id value = ParseJSONObject(offset, json, jsonLength, outError);
+						id value = ParseJSONObject(offset, json, jsonLength, useNSNull, outError);
 						if (outError && *outError) return nil;
-						[dict setObject:value forKey:key];
+						if (value) {
+							[dict setObject:value forKey:key];
+						}
 						if (*offset >= jsonLength || json[*offset] != ',') break;
 						*offset += 1;
 					}
@@ -86,7 +88,7 @@ static id ParseJSONObject(int *offset, unichar *json, int jsonLength, NSError **
 					while (true) {
 						SkipWhitespace(offset, json, jsonLength);
 						
-						id value = ParseJSONObject(offset, json, jsonLength, outError);
+						id value = ParseJSONObject(offset, json, jsonLength, useNSNull, outError);
 						if (outError && *outError) return nil;
 						[array addObject:value];
 						if (*offset >= jsonLength || json[*offset] != ',') break;
@@ -155,7 +157,10 @@ static id ParseJSONObject(int *offset, unichar *json, int jsonLength, NSError **
 			case 'n': { // null
 				if (*offset + 4 < jsonLength && json[*offset + 1] == 'u' && json[*offset + 2] == 'l' && json[*offset + 3] == 'l') {
 					*offset += 4;
-					return [NSNull null];
+					if (useNSNull) {
+						return [NSNull null];
+					}
+					return NULL;
 				} else {
 					PARSE_ERROR(@"Unknown value", *offset, outError);
 				}
@@ -163,9 +168,7 @@ static id ParseJSONObject(int *offset, unichar *json, int jsonLength, NSError **
 			
 			default: { // Number or bad stuff
 				BOOL valid = NO;
-				BOOL floatingPoint = NO;
-				double doubleValue = 0;
-				long long value = 0;
+				double value = 0;
 				BOOL neg = NO;
 				if (json[*offset] == '-') {
 					neg = YES;
@@ -175,25 +178,22 @@ static id ParseJSONObject(int *offset, unichar *json, int jsonLength, NSError **
 				
 				while (*offset < jsonLength && json[*offset] >= '0' && json[*offset] <= '9') {
 					value = value * 10 + json[*offset] - '0';
-					doubleValue = doubleValue * 10 + json[*offset] - '0';
 					valid = YES;
 					*offset += 1;
 				}
 				
 				if (*offset < jsonLength && json[*offset] == '.') {
-					floatingPoint = YES;
 					*offset += 1;
 					valid = YES;
 					double place = 10;					
 					while (*offset < jsonLength && json[*offset] >= '0' && json[*offset] <= '9') {
-						doubleValue = doubleValue + (double)(json[*offset] - '0') / place;
+						value = value + (double)(json[*offset] - '0') / place;
 						place *= 10;
 						*offset += 1;
 					}
 				}
 				
 				if (*offset < jsonLength && (json[*offset] == 'e' || json[*offset] == 'E')) {
-					floatingPoint = YES;
 					*offset += 1;
 					valid = YES;
 					BOOL posExp = YES;
@@ -210,23 +210,16 @@ static id ParseJSONObject(int *offset, unichar *json, int jsonLength, NSError **
 						*offset += 1;
 					}
 					
-					doubleValue = doubleValue * pow(10, posExp ? exp : -exp);
+					value = value * pow(10, posExp ? exp : -exp);
 				}
 				
 				if (!valid) {
 					PARSE_ERROR(@"Invalid data", *offset, outError);
 				}
 				
-				if (neg) {
-					value = -value;
-					doubleValue = -doubleValue;
-				}
+				if (neg) value = -value;
 				
-				if (floatingPoint) {
-					return [NSNumber numberWithDouble:doubleValue];
-				} else {
-					return [NSNumber numberWithLongLong:value];
-				}
+				return [NSNumber numberWithDouble:value];
 			} break; 
 		}
 	}
@@ -234,13 +227,17 @@ static id ParseJSONObject(int *offset, unichar *json, int jsonLength, NSError **
 }
 
 + (id)objectFromJSON:(NSString *)jsonString {
+	return [self objectFromJSON:jsonString useNSNull:YES];
+}
+
++ (id)objectFromJSON:(NSString *)jsonString useNSNull:(BOOL)useNSNull {
 	int jsonLength = [jsonString length];
 	unichar *json = malloc(jsonLength * sizeof(unichar));
 	[jsonString getCharacters:json];
 	
 	int consumedLength = 0;
 	NSError *error = nil;
-	id obj = ParseJSONObject(&consumedLength, json, jsonLength, &error);
+	id obj = ParseJSONObject(&consumedLength, json, jsonLength, useNSNull, &error);
 	if (error) {
 		NSLog(@"%@", [error description]);
 		NSLog(@"%@", [[error userInfo] description]);

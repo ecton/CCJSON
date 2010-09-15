@@ -35,4 +35,6 @@
 
 + (id)objectFromJSON:(NSString *)json;
 
++ (id)objectFromJSON:(NSString *)json useNSNull:(BOOL)useNSNull;
+
 @end
