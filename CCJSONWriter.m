@@ -92,6 +92,10 @@
 }
 
 + (void)appendDictionary:(NSDictionary *)dictionary toString:(NSMutableString *)json {
+	NSArray *keys = [dictionary objectForKey:CCJSONFieldOrderKey];
+	if (!keys) {
+		keys = [dictionary allKeys];
+	}
 	[json appendString:@"{"];
 	BOOL first = YES;
 	for (id key in [dictionary allKeys]) {

@@ -1,5 +1,5 @@
 //
-//  CCJSONWriter.h
+//  CCJSONParser.h
 //  CCJSON
 //
 //  Created by Jonathan Johnson on 8/18/09.
@@ -26,14 +26,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 //  OTHER DEALINGS IN THE SOFTWARE.
 
-#import <Foundation/Foundation.h>
-#import "CCJSON.h"
+#import "CCJSONParser.h"
+#import "CCJSONWriter.h"
 
-@interface CCJSONWriter : NSObject {
-
-}
-
-+ (NSString *)stringFromDictionary:(NSDictionary *)dictionary;
-+ (NSString *)stringFromArray:(NSArray *)array;
-
-@end
+#define CCJSONFieldOrderKey @"__field_order__"
