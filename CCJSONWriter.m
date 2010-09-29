@@ -98,7 +98,7 @@
 	}
 	[json appendString:@"{"];
 	BOOL first = YES;
-	for (id key in [dictionary allKeys]) {
+	for (id key in keys) {
 		if (first) {
 			first = NO;
 		} else {
