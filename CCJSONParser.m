@@ -168,7 +168,9 @@ static id ParseJSONObject(int *offset, unichar *json, int jsonLength, BOOL useNS
 			
 			default: { // Number or bad stuff
 				BOOL valid = NO;
-				double value = 0;
+				BOOL floatingPoint = NO;
+				long long value = 0;
+				double doubleValue = 0;
 				BOOL neg = NO;
 				if (json[*offset] == '-') {
 					neg = YES;
@@ -178,16 +180,18 @@ static id ParseJSONObject(int *offset, unichar *json, int jsonLength, BOOL useNS
 				
 				while (*offset < jsonLength && json[*offset] >= '0' && json[*offset] <= '9') {
 					value = value * 10 + json[*offset] - '0';
+					doubleValue = doubleValue * 10 + json[*offset] - '0';
 					valid = YES;
 					*offset += 1;
 				}
 				
 				if (*offset < jsonLength && json[*offset] == '.') {
+					floatingPoint = YES;
 					*offset += 1;
 					valid = YES;
 					double place = 10;					
 					while (*offset < jsonLength && json[*offset] >= '0' && json[*offset] <= '9') {
-						value = value + (double)(json[*offset] - '0') / place;
+						doubleValue = doubleValue + (double)(json[*offset] - '0') / place;
 						place *= 10;
 						*offset += 1;
 					}
@@ -195,6 +199,7 @@ static id ParseJSONObject(int *offset, unichar *json, int jsonLength, BOOL useNS
 				
 				if (*offset < jsonLength && (json[*offset] == 'e' || json[*offset] == 'E')) {
 					*offset += 1;
+					floatingPoint = YES;
 					valid = YES;
 					BOOL posExp = YES;
 					if (*offset < jsonLength && json[*offset] == '+') {
@@ -210,16 +215,23 @@ static id ParseJSONObject(int *offset, unichar *json, int jsonLength, BOOL useNS
 						*offset += 1;
 					}
 					
-					value = value * pow(10, posExp ? exp : -exp);
+					doubleValue = doubleValue * pow(10, posExp ? exp : -exp);
 				}
 				
 				if (!valid) {
 					PARSE_ERROR(@"Invalid data", *offset, outError);
 				}
 				
-				if (neg) value = -value;
+				if (neg) {
+					value = -value;
+					doubleValue = -doubleValue;
+				}
 				
-				return [NSNumber numberWithDouble:value];
+				if (floatingPoint) {
+					return [NSNumber numberWithDouble:doubleValue];
+				} else {
+					return [NSNumber numberWithLongLong:value];
+				}
 			} break; 
 		}
 	}
