@@ -62,6 +62,7 @@ static id ParseJSONObject(int *inOutOffset, unichar *json, int jsonLength, BOOL 
 					while (true) {
 						SkipWhitespace(offset, json, jsonLength);
 						*inOutOffset = offset;
+						if (json[offset] == '}') break;
 						id key = ParseJSONObject(inOutOffset, json, jsonLength, useNSNull, outError);
 						if (outError && *outError) return nil;
 						offset = *inOutOffset;
@@ -96,8 +97,8 @@ static id ParseJSONObject(int *inOutOffset, unichar *json, int jsonLength, BOOL 
 				if (offset < jsonLength && json[offset] != ']') {
 					while (true) {
 						SkipWhitespace(offset, json, jsonLength);
-						
 						*inOutOffset = offset;
+						if (json[offset] == ']') break;
 						id value = ParseJSONObject(inOutOffset, json, jsonLength, useNSNull, outError);
 						if (outError && *outError) return nil;
 						offset = *inOutOffset;
