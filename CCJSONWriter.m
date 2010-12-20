@@ -153,4 +153,10 @@
 	return json;
 }
 
++ (NSString *)stringFromString:(NSString *)str {
+	NSMutableString *json = [NSMutableString string];
+	[self appendString:str toString:json];
+	return json;
+}
+
 @end

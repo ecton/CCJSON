@@ -35,5 +35,6 @@
 
 + (NSString *)stringFromDictionary:(NSDictionary *)dictionary;
 + (NSString *)stringFromArray:(NSArray *)array;
++ (NSString *)stringFromString:(NSString *)str;
 
 @end
