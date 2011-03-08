@@ -155,7 +155,7 @@ static id ParseJSONObject(int *inOutOffset, unichar *json, int jsonLength, BOOL 
 						uncommittedLength = 0;
 					}
 				}
-				if (uncommittedLength > 0) {
+				if (uncommittedLength > 0 || !str) {
 					if (!str) {
 						str = [[NSString alloc] initWithCharacters:stringBuffer length:uncommittedLength];
 					} else {
