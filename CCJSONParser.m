@@ -114,6 +114,7 @@ static id ParseJSONObject(int *inOutOffset, unichar *json, int jsonLength, BOOL 
 						offset = *inOutOffset;
 						[array addObject:value];
 						NO_ARC_RELEASE(value);
+						SkipWhitespace(offset, json, jsonLength);
 						if (offset >= jsonLength || json[offset] != ',') break;
 						offset += 1;
 					}
