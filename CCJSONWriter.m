@@ -43,7 +43,7 @@
 + (void)appendString:(NSString *)string toString:(NSMutableString *)json {
     static NSMutableCharacterSet *sCharsToEscape;
     if (!sCharsToEscape) {
-        sCharsToEscape = [[NSCharacterSet alloc] init]; 
+        sCharsToEscape = [[NSMutableCharacterSet alloc] init]; 
 		[sCharsToEscape addCharactersInRange:NSMakeRange(0,32)];
         [sCharsToEscape addCharactersInString:@"\\\""];
     }
@@ -73,7 +73,7 @@
                     if (c < 0x20) {
                         [json appendFormat:@"\\u%04x", c];
                     } else {
-                        CFStringAppendCharacters((CFMutableStringRef)json, &c, 1);
+                        CFStringAppendCharacters((__bridge CFMutableStringRef)json, &c, 1);
                     }
                     break;
             }
@@ -84,7 +84,7 @@
 }
 
 + (void)appendNumber:(NSNumber *)number toString:(NSMutableString *)json {
-	if (CFGetTypeID((CFTypeRef)number) == CFBooleanGetTypeID()) {
+	if (CFGetTypeID((__bridge CFTypeRef)number) == CFBooleanGetTypeID()) {
 		[json appendString:[number boolValue] ? @"true" : @"false"];
 	} else {
 		[json appendString:[number stringValue]];

@@ -29,6 +29,16 @@
 
 #import "CCJSONParser.h"
 
+#if __has_feature(objc_arc)
+    #define NO_ARC_RETAIN(obj) obj
+    #define NO_ARC_RELEASE(obj) while (0)
+    #define NO_ARC_AUTORELEASE(obj) obj
+#else
+    #define NO_ARC_RELEASE(obj) [obj release]
+    #define NO_ARC_AUTORELEASE(obj) [obj autorelease]
+    #define NO_ARC_RETAIN(obj) [obj retain]
+#endif
+
 #define SkipWhitespace(offset, json, jsonLength) \
 		while (offset < jsonLength && (json[offset] == '\t' || json[offset] == ' ' || json[offset] == '\r' || json[offset] == '\n')) { \
 			offset += 1; \
@@ -76,9 +86,9 @@ static id ParseJSONObject(int *inOutOffset, unichar *json, int jsonLength, BOOL 
 						offset = *inOutOffset;
 						if (value) {
 							[dict setObject:value forKey:key];
-							[value release];
+							NO_ARC_RELEASE(value);
 						}
-						[key release];
+						NO_ARC_RELEASE(key);
 						if (offset >= jsonLength || json[offset] != ',') break;
 						offset += 1;
 					}
@@ -103,7 +113,7 @@ static id ParseJSONObject(int *inOutOffset, unichar *json, int jsonLength, BOOL 
 						if (outError && *outError) return nil;
 						offset = *inOutOffset;
 						[array addObject:value];
-						[value release];
+						NO_ARC_RELEASE(value);
 						if (offset >= jsonLength || json[offset] != ',') break;
 						offset += 1;
 					}
@@ -151,7 +161,7 @@ static id ParseJSONObject(int *inOutOffset, unichar *json, int jsonLength, BOOL 
 							// If we've already consumed 1k, it could be much longer -- let's allocate more space to avoid another resize
 							str = [[NSMutableString alloc] initWithCapacity:4096];
 						}
-						CFStringAppendCharacters((CFMutableStringRef)str, stringBuffer, uncommittedLength);
+						CFStringAppendCharacters((__bridge CFMutableStringRef)str, stringBuffer, uncommittedLength);
 						uncommittedLength = 0;
 					}
 				}
@@ -159,7 +169,7 @@ static id ParseJSONObject(int *inOutOffset, unichar *json, int jsonLength, BOOL 
 					if (!str) {
 						str = [[NSString alloc] initWithCharacters:stringBuffer length:uncommittedLength];
 					} else {
-						CFStringAppendCharacters((CFMutableStringRef)str, stringBuffer, uncommittedLength);
+						CFStringAppendCharacters((__bridge CFMutableStringRef)str, stringBuffer, uncommittedLength);
 					}
 				}
 				if (offset >= jsonLength || json[offset] != '"') PARSE_ERROR(@"Expected closing quote of string", offset, outError);
@@ -193,7 +203,7 @@ static id ParseJSONObject(int *inOutOffset, unichar *json, int jsonLength, BOOL 
 					offset += 4;
 					*inOutOffset = offset;
 					if (useNSNull) {
-						return [[NSNull null] retain];
+						return NO_ARC_RETAIN([NSNull null]);
 					}
 					return NULL;
 				} else {
@@ -281,7 +291,7 @@ static id ParseJSONObject(int *inOutOffset, unichar *json, int jsonLength, BOOL 
 	}
 	
 	free(json);
-	return [obj autorelease];
+	return NO_ARC_AUTORELEASE(obj);
 }
 
 @end
