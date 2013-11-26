@@ -275,9 +275,9 @@ static id ParseJSONObject(int *inOutOffset, unichar *json, int jsonLength, BOOL 
 				
 				*inOutOffset = offset;
 				if (floatingPoint) {
-					return [NSNumber numberWithDouble:doubleValue];
+					return [[NSNumber alloc] initWithDouble:doubleValue];
 				} else {
-					return [NSNumber numberWithLongLong:value];
+					return [[NSNumber alloc] initWithLongLong:value];
 				}
 			} break; 
 		}
