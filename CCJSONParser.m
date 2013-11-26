@@ -250,7 +250,7 @@ static id ParseJSONObject(int *inOutOffset, unichar *json, int jsonLength, BOOL 
 					BOOL posExp = YES;
 					if (offset < jsonLength && json[offset] == '+') {
 						offset += 1;
-					} else if (offset < jsonLength && json[offset] == '+') {
+					} else if (offset < jsonLength && json[offset] == '-') {
 						posExp = NO;
 						offset += 1;
 					}
@@ -291,7 +291,7 @@ static id ParseJSONObject(int *inOutOffset, unichar *json, int jsonLength, BOOL 
 }
 
 + (id)objectFromJSON:(NSString *)jsonString useNSNull:(BOOL)useNSNull {
-	int jsonLength = [jsonString length];
+	int jsonLength = (int)[jsonString length];
 	unichar *json = malloc(jsonLength * sizeof(unichar));
 	[jsonString getCharacters:json];
 	
